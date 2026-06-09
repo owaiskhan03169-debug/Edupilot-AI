@@ -1,0 +1,13 @@
+﻿fastapi
+uvicorn
+pydantic
+pytest
+httpx
+PyPDF2
+python-docx
+python-multipart
+openai
+google-generativeai
+chromadb
+sentence-transformers
+numpy
