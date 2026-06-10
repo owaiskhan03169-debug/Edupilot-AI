@@ -188,7 +188,12 @@ async def upload_syllabus(file: UploadFile = File(...)):
                 
                 for chapter_name, chapter_data in chapters.items():
                     doc_text = f"{class_name} {subject} {chapter_name} {json.dumps(chapter_data)}"
-                    embedding = embedding_model.encode(doc_text).tolist()
+                    embedding = embedding_model = None  def get_embedding_model():    
+                    global embedding_model     
+                    if embedding_model is None:         
+                        print("Loading SentenceTransformer model...")         
+                        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')     
+                        return embedding_model(doc_text).tolist()
                     syllabus_collection.add(
                         documents=[doc_text],
                         embeddings=[embedding],
@@ -222,7 +227,12 @@ async def query_syllabus(query: SyllabusQuery):
                 return {"result": "Syllabus not found. Please upload first."}
         
         elif query.query_type == "search" and query.search_query:
-            query_embedding = embedding_model.encode(query.search_query).tolist()
+            query_embedding = embedding_model = None  def get_embedding_model():     
+                global embedding_model     
+                if embedding_model is None:         
+                    print("Loading SentenceTransformer model...")         
+                    embedding_model = SentenceTransformer('all-MiniLM-L6-v2')     
+                    return embedding_model(query.search_query).tolist()
             results = syllabus_collection.query(
                 query_embeddings=[query_embedding],
                 n_results=3
@@ -297,7 +307,11 @@ async def answer_doubt(req: DoubtRequest):
         key = f"{req.class_name}_{req.subject}"
         syllabus_context = json.dumps(syllabus_store.get(key, {}))
         
-        query_embedding = embedding_model.encode(req.question).tolist()
+        query_embedding = embedding_model = None  def get_embedding_model():     
+            global embedding_model     if embedding_model is None:         
+                print("Loading SentenceTransformer model...")         
+                embedding_model = SentenceTransformer('all-MiniLM-L6-v2')    
+                return embedding_model(req.question).tolist()
         results = syllabus_collection.query(
             query_embeddings=[query_embedding],
             n_results=1,
