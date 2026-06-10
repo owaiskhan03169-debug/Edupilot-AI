@@ -208,7 +208,6 @@ async def upload_syllabus(file: UploadFile = File(...)):
                     doc_text = f"{class_name} {subject} {chapter_name} {json.dumps(chapter_data)}"
                     embedding = get_embedding_model().encode(doc_text).tolist()
                     
-                    # 🔥 LAZY LOADED DATABASE CALL 🔥
                     get_syllabus_collection().add(
                         documents=[doc_text],
                         embeddings=[embedding],
@@ -244,7 +243,6 @@ async def query_syllabus(query: SyllabusQuery):
         elif query.query_type == "search" and query.search_query:
             query_embedding = get_embedding_model().encode(query.search_query).tolist()
             
-            # 🔥 LAZY LOADED DATABASE CALL 🔥
             results = get_syllabus_collection().query(
                 query_embeddings=[query_embedding],
                 n_results=3
@@ -321,7 +319,6 @@ async def answer_doubt(req: DoubtRequest):
         
         query_embedding = get_embedding_model().encode(req.question).tolist()
         
-        # 🔥 LAZY LOADED DATABASE CALL 🔥
         results = get_syllabus_collection().query(
             query_embeddings=[query_embedding],
             n_results=1,
@@ -435,4 +432,5 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
