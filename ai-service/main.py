@@ -7,8 +7,6 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import PyPDF2
 from docx import Document
-import chromadb
-from sentence_transformers import SentenceTransformer
 import openai
 import google.generativeai as genai
 
@@ -42,7 +40,7 @@ if USE_GEMINI:
     gemini_model = genai.GenerativeModel('gemini-pro')
 
 
-# --- 🔥 LAZY LOADING FIX FOR RENDER TIMEOUT 🔥 ---
+# --- 🔥 ULTRA LAZY LOADING (IMPORTS MOVED INSIDE) 🔥 ---
 embedding_model = None
 chroma_client = None
 syllabus_collection = None
@@ -51,6 +49,8 @@ def get_embedding_model():
     global embedding_model
     if embedding_model is None:
         print("Loading SentenceTransformer model...")
+        # Lazy Import here!
+        from sentence_transformers import SentenceTransformer
         embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
     return embedding_model
 
@@ -58,6 +58,8 @@ def get_syllabus_collection():
     global chroma_client, syllabus_collection
     if chroma_client is None:
         print("Loading ChromaDB client...")
+        # Lazy Import here!
+        import chromadb
         chroma_client = chromadb.Client()
         syllabus_collection = chroma_client.get_or_create_collection(name="syllabus_context")
     return syllabus_collection
