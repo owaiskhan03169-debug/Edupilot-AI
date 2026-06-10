@@ -43,7 +43,14 @@ if USE_GEMINI:
 
 chroma_client = chromadb.Client()
 syllabus_collection = chroma_client.get_or_create_collection(name="syllabus_context")
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+embedding_model = None
+
+def get_embedding_model():
+    global embedding_model
+    if embedding_model is None:
+        print("Loading SentenceTransformer model...")
+        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+    return embedding_model
 
 syllabus_store = {}
 
@@ -192,7 +199,14 @@ async def upload_syllabus(file: UploadFile = File(...)):
                     global embedding_model     
                     if embedding_model is None:         
                         print("Loading SentenceTransformer model...")         
-                        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')     
+                        embedding_model = None
+
+def get_embedding_model():
+    global embedding_model
+    if embedding_model is None:
+        print("Loading SentenceTransformer model...")
+        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+    return embedding_model     
                         return embedding_model(doc_text).tolist()
                     syllabus_collection.add(
                         documents=[doc_text],
@@ -231,7 +245,14 @@ async def query_syllabus(query: SyllabusQuery):
                 global embedding_model     
                 if embedding_model is None:         
                     print("Loading SentenceTransformer model...")         
-                    embedding_model = SentenceTransformer('all-MiniLM-L6-v2')     
+                    embedding_model = None
+
+def get_embedding_model():
+    global embedding_model
+    if embedding_model is None:
+        print("Loading SentenceTransformer model...")
+        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+    return embedding_model     
                     return embedding_model(query.search_query).tolist()
             results = syllabus_collection.query(
                 query_embeddings=[query_embedding],
@@ -310,7 +331,14 @@ async def answer_doubt(req: DoubtRequest):
         query_embedding = embedding_model = None  def get_embedding_model():     
             global embedding_model     if embedding_model is None:         
                 print("Loading SentenceTransformer model...")         
-                embedding_model = SentenceTransformer('all-MiniLM-L6-v2')    
+                embedding_model = None
+
+def get_embedding_model():
+    global embedding_model
+    if embedding_model is None:
+        print("Loading SentenceTransformer model...")
+        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+    return embedding_model    
                 return embedding_model(req.question).tolist()
         results = syllabus_collection.query(
             query_embeddings=[query_embedding],
