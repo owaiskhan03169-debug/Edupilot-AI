@@ -1,4 +1,4 @@
-﻿import os
+import os
 import json
 import io
 from fastapi import FastAPI, HTTPException, UploadFile, File
@@ -36,13 +36,14 @@ USE_GEMINI = os.getenv("USE_GEMINI", "true").lower() == "true"
 
 if USE_OPENAI:
     openai.api_key = os.getenv("OPENAI_API_KEY", "")
-    
+
 if USE_GEMINI:
     genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
     gemini_model = genai.GenerativeModel('gemini-pro')
 
 chroma_client = chromadb.Client()
 syllabus_collection = chroma_client.get_or_create_collection(name="syllabus_context")
+
 embedding_model = None
 
 def get_embedding_model():
@@ -195,19 +196,7 @@ async def upload_syllabus(file: UploadFile = File(...)):
                 
                 for chapter_name, chapter_data in chapters.items():
                     doc_text = f"{class_name} {subject} {chapter_name} {json.dumps(chapter_data)}"
-                    embedding = embedding_model = None  def get_embedding_model():    
-                    global embedding_model     
-                    if embedding_model is None:         
-                        print("Loading SentenceTransformer model...")         
-                        embedding_model = None
-
-def get_embedding_model():
-    global embedding_model
-    if embedding_model is None:
-        print("Loading SentenceTransformer model...")
-        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-    return embedding_model     
-                        return embedding_model(doc_text).tolist()
+                    embedding = get_embedding_model().encode(doc_text).tolist()
                     syllabus_collection.add(
                         documents=[doc_text],
                         embeddings=[embedding],
@@ -241,19 +230,7 @@ async def query_syllabus(query: SyllabusQuery):
                 return {"result": "Syllabus not found. Please upload first."}
         
         elif query.query_type == "search" and query.search_query:
-            query_embedding = embedding_model = None  def get_embedding_model():     
-                global embedding_model     
-                if embedding_model is None:         
-                    print("Loading SentenceTransformer model...")         
-                    embedding_model = None
-
-def get_embedding_model():
-    global embedding_model
-    if embedding_model is None:
-        print("Loading SentenceTransformer model...")
-        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-    return embedding_model     
-                    return embedding_model(query.search_query).tolist()
+            query_embedding = get_embedding_model().encode(query.search_query).tolist()
             results = syllabus_collection.query(
                 query_embeddings=[query_embedding],
                 n_results=3
@@ -328,18 +305,7 @@ async def answer_doubt(req: DoubtRequest):
         key = f"{req.class_name}_{req.subject}"
         syllabus_context = json.dumps(syllabus_store.get(key, {}))
         
-        query_embedding = embedding_model = None  def get_embedding_model():     
-            global embedding_model     if embedding_model is None:         
-                print("Loading SentenceTransformer model...")         
-                embedding_model = None
-
-def get_embedding_model():
-    global embedding_model
-    if embedding_model is None:
-        print("Loading SentenceTransformer model...")
-        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-    return embedding_model    
-                return embedding_model(req.question).tolist()
+        query_embedding = get_embedding_model().encode(req.question).tolist()
         results = syllabus_collection.query(
             query_embeddings=[query_embedding],
             n_results=1,
@@ -454,5 +420,3 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-# Made with Bob
