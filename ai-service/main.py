@@ -41,10 +41,11 @@ if USE_GEMINI:
     genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
     gemini_model = genai.GenerativeModel('gemini-pro')
 
-chroma_client = chromadb.Client()
-syllabus_collection = chroma_client.get_or_create_collection(name="syllabus_context")
 
+# --- 🔥 LAZY LOADING FIX FOR RENDER TIMEOUT 🔥 ---
 embedding_model = None
+chroma_client = None
+syllabus_collection = None
 
 def get_embedding_model():
     global embedding_model
@@ -52,6 +53,15 @@ def get_embedding_model():
         print("Loading SentenceTransformer model...")
         embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
     return embedding_model
+
+def get_syllabus_collection():
+    global chroma_client, syllabus_collection
+    if chroma_client is None:
+        print("Loading ChromaDB client...")
+        chroma_client = chromadb.Client()
+        syllabus_collection = chroma_client.get_or_create_collection(name="syllabus_context")
+    return syllabus_collection
+# --------------------------------------------------
 
 syllabus_store = {}
 
@@ -197,7 +207,9 @@ async def upload_syllabus(file: UploadFile = File(...)):
                 for chapter_name, chapter_data in chapters.items():
                     doc_text = f"{class_name} {subject} {chapter_name} {json.dumps(chapter_data)}"
                     embedding = get_embedding_model().encode(doc_text).tolist()
-                    syllabus_collection.add(
+                    
+                    # 🔥 LAZY LOADED DATABASE CALL 🔥
+                    get_syllabus_collection().add(
                         documents=[doc_text],
                         embeddings=[embedding],
                         ids=[f"{key}_{chapter_name}"]
@@ -231,7 +243,9 @@ async def query_syllabus(query: SyllabusQuery):
         
         elif query.query_type == "search" and query.search_query:
             query_embedding = get_embedding_model().encode(query.search_query).tolist()
-            results = syllabus_collection.query(
+            
+            # 🔥 LAZY LOADED DATABASE CALL 🔥
+            results = get_syllabus_collection().query(
                 query_embeddings=[query_embedding],
                 n_results=3
             )
@@ -306,7 +320,9 @@ async def answer_doubt(req: DoubtRequest):
         syllabus_context = json.dumps(syllabus_store.get(key, {}))
         
         query_embedding = get_embedding_model().encode(req.question).tolist()
-        results = syllabus_collection.query(
+        
+        # 🔥 LAZY LOADED DATABASE CALL 🔥
+        results = get_syllabus_collection().query(
             query_embeddings=[query_embedding],
             n_results=1,
             where={"$contains": key}
